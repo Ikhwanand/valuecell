@@ -1,8 +1,14 @@
 """News Agent Core Implementation."""
 
+import os
 from typing import Any, AsyncGenerator, Dict, Optional
 
 from agno.agent import Agent
+from agno.tools.baidusearch import BaiduSearchTools
+from agno.tools.duckduckgo import DuckDuckGoTools
+from agno.tools.webbrowser import WebBrowserTools
+from agno.tools.hackernews import HackerNewsTools
+from agno.tools.newspaper4k import Newspaper4kTools
 from loguru import logger
 
 from valuecell.adapters.models import create_model_for_agent
@@ -12,6 +18,25 @@ from valuecell.core.types import BaseAgent, StreamResponse
 
 from .prompts import NEWS_AGENT_INSTRUCTIONS
 from .tools import get_breaking_news, get_financial_news, web_search
+
+
+def _get_web_search_tool() -> list:
+    """
+    Return the appropriate web search tools based on configured API keys.
+
+    - If GOOGLE_API_KEY is set     → custom web_search using Gemini grounding
+    - If OPENROUTER_API_KEY is set → custom web_search using Perplexity via OpenRouter
+    - Otherwise                    → Agno built-in tools (DuckDuckGo + BaiduSearch + WebBrowser)
+    """
+    has_google = bool(os.getenv("GOOGLE_API_KEY"))
+    has_openrouter = bool(os.getenv("OPENROUTER_API_KEY"))
+
+    if has_google or has_openrouter:
+        logger.info("NewsAgent web search: using custom provider (Google/OpenRouter)")
+        return [web_search]
+    else:
+        logger.info("NewsAgent web search: using Agno built-in tools (DuckDuckGo + BaiduSearch + WebBrowser)")
+        return [DuckDuckGoTools(), BaiduSearchTools(), WebBrowserTools(), HackerNewsTools(), Newspaper4kTools()]
 
 
 class NewsAgent(BaseAgent):
@@ -25,9 +50,12 @@ class NewsAgent(BaseAgent):
         self.agent_config = self.config_manager.get_agent_config("news_agent")
 
         # Load tools based on configuration
-        available_tools = []
-
-        available_tools.extend([web_search, get_breaking_news, get_financial_news])
+        web_search_tools = _get_web_search_tool()
+        available_tools = [
+            *web_search_tools,
+            get_breaking_news,
+            get_financial_news,
+        ]
 
         # Use create_model_for_agent to load agent-specific configuration
         self.knowledge_news_agent = Agent(

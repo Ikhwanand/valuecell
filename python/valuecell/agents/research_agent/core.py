@@ -3,6 +3,11 @@ from typing import AsyncGenerator, Dict, Optional
 
 from agno.agent import Agent
 from agno.db.in_memory import InMemoryDb
+from agno.tools.baidusearch import BaiduSearchTools
+from agno.tools.duckduckgo import DuckDuckGoTools
+from agno.tools.webbrowser import WebBrowserTools
+from agno.tools.hackernews import HackerNewsTools
+from agno.tools.newspaper4k import Newspaper4kTools
 from edgar import set_identity
 from loguru import logger
 
@@ -27,14 +32,34 @@ from valuecell.core.types import BaseAgent, StreamResponse
 from valuecell.utils.env import agent_debug_mode_enabled
 
 
+def _get_web_search_tool() -> list:
+    """
+    Return the appropriate web search tools based on configured API keys.
+
+    - If GOOGLE_API_KEY is set  → custom web_search using Gemini grounding
+    - If OPENROUTER_API_KEY is set → custom web_search using Perplexity via OpenRouter
+    - Otherwise                 → Agno built-in tools (DuckDuckGo + BaiduSearch), no API key needed
+    """
+    has_google = bool(os.getenv("GOOGLE_API_KEY"))
+    has_openrouter = bool(os.getenv("OPENROUTER_API_KEY"))
+
+    if has_google or has_openrouter:
+        logger.info("Web search: using custom provider (Google/OpenRouter)")
+        return [web_search]
+    else:
+        logger.info("Web search: using Agno built-in tools (DuckDuckGo + BaiduSearch)")
+        return [DuckDuckGoTools(), BaiduSearchTools(), WebBrowserTools(), HackerNewsTools(), Newspaper4kTools()]
+
+
 class ResearchAgent(BaseAgent):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        web_search_tools = _get_web_search_tool()
         tools = [
             fetch_periodic_sec_filings,
             fetch_event_sec_filings,
             fetch_ashare_filings,
-            web_search,
+            *web_search_tools,
             search_crypto_projects,
             search_crypto_vcs,
             search_crypto_people,

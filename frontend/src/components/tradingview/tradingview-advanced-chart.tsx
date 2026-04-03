@@ -62,10 +62,15 @@ function TradingViewAdvancedChart({
   useEffect(() => {
     if (!containerRef.current || !tvSymbol) return;
 
-    if (scriptRef.current && containerRef.current.contains(scriptRef.current)) {
-      containerRef.current.removeChild(scriptRef.current);
-      scriptRef.current = null;
+    // TradingView modifies DOM externally, so removeChild can fail — use try/catch
+    try {
+      if (scriptRef.current && containerRef.current.contains(scriptRef.current)) {
+        containerRef.current.removeChild(scriptRef.current);
+      }
+    } catch {
+      // Node may have already been moved by TradingView widget
     }
+    scriptRef.current = null;
     containerRef.current.innerHTML = "";
 
     const script = document.createElement("script");
@@ -102,14 +107,18 @@ function TradingViewAdvancedChart({
     scriptRef.current = script;
 
     return () => {
-      if (
-        scriptRef.current &&
-        containerRef.current &&
-        containerRef.current.contains(scriptRef.current)
-      ) {
-        containerRef.current.removeChild(scriptRef.current);
-        scriptRef.current = null;
+      try {
+        if (
+          scriptRef.current &&
+          containerRef.current &&
+          containerRef.current.contains(scriptRef.current)
+        ) {
+          containerRef.current.removeChild(scriptRef.current);
+        }
+      } catch {
+        // Node may have already been moved by TradingView widget
       }
+      scriptRef.current = null;
       if (containerRef.current) {
         containerRef.current.innerHTML = "";
       }
