@@ -17,6 +17,7 @@ export default [
   ]),
 
   route("/market", "app/market/agents.tsx"),
+  route("/polymarket", "app/polymarket/page.tsx"),
 
   // route("/ranking", "app/rank/board.tsx"),
 

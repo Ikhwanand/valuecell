@@ -233,3 +233,5 @@ logs
 python/configs/
 
 *.key
+skills-lock.json
+.agents

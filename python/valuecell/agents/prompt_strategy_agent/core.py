@@ -13,7 +13,27 @@ from valuecell.agents.common.trading.features import (
     BaseFeaturesPipeline,
     DefaultFeaturesPipeline,
 )
-from valuecell.agents.common.trading.models import UserRequest
+from valuecell.agents.common.trading.features.polymarket import fetch_polymarket_features
+from valuecell.agents.common.trading.models import FeaturesPipelineResult, UserRequest
+
+
+class PolymarketEnrichedPipeline(DefaultFeaturesPipeline):
+    """Extends the default pipeline with Polymarket prediction market signals.
+
+    Runs the standard candle + market snapshot pipeline first, then enriches
+    the result with crowd-wisdom signals from Polymarket prediction markets.
+    """
+
+    async def build(self) -> FeaturesPipelineResult:
+        """Build features with Polymarket signals appended."""
+        # 1. Jalankan pipeline default (candles + market snapshot)
+        result = await super().build()
+
+        # 2. Enrichment: tambahkan sinyal Polymarket (non-blocking jika gagal)
+        polymarket_features = await fetch_polymarket_features(limit=5)
+        result.features.extend(polymarket_features)
+
+        return result
 
 
 class PromptBasedStrategyAgent(BaseStrategyAgent):
@@ -41,9 +61,9 @@ class PromptBasedStrategyAgent(BaseStrategyAgent):
     async def _build_features_pipeline(
         self, request: UserRequest
     ) -> BaseFeaturesPipeline | None:
-        """Use the default features pipeline built from the user request."""
+        """Use Polymarket-enriched features pipeline built from the user request."""
 
-        return DefaultFeaturesPipeline.from_request(request)
+        return PolymarketEnrichedPipeline.from_request(request)
 
     async def _create_decision_composer(
         self, request: UserRequest
