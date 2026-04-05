@@ -17,5 +17,6 @@ export interface PolymarketMarket {
   yes_price?: number;
   no_price?: number;
   market_slug?: string;
+  event_slug?: string;
   tokens: PolymarketToken[];
 }

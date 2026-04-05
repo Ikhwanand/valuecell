@@ -42,3 +42,32 @@ export const useGetCryptoPolymarkets = (limit = 10) =>
     select: (data) => data.data,
     staleTime: 1000 * 60 * 2,
   });
+
+export interface AnalysisRequest {
+  condition_id: string;
+  question: string;
+  yes_price?: number;
+  volume: number;
+}
+
+export interface AnalysisResponseData {
+  recommendation: "buy" | "sell";
+  outcome_recommended: "yes" | "no";
+  suggested_amount: number;
+  analysis: string;
+}
+
+export const analyzeMarket = async (
+  req: AnalysisRequest,
+): Promise<{ data: AnalysisResponseData }> => {
+  const res = await fetch(
+    "http://localhost:8000/api/v1/polymarket/markets/analyze",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(req),
+    },
+  );
+  if (!res.ok) throw new Error("Failed to map AI response");
+  return res.json();
+};

@@ -8,6 +8,9 @@ from ....integrations.polymarket.client import get_markets, get_crypto_relevant_
 from ....integrations.polymarket.models import PolymarketMarket
 from ..schemas import SuccessResponse
 
+from agno.agent import Agent as AgnoAgent
+from ....utils import model as model_utils
+
 # Response Schemas
 
 class TokenData(BaseModel):
@@ -31,6 +34,18 @@ class MarketData(BaseModel):
     market_slug: Optional[str] = None
     tokens: List[TokenData] = []
     
+
+class AnalyzeRequest(BaseModel):
+    condition_id: str 
+    question: str 
+    yes_price: Optional[float] = None 
+    volume: Optional[float] = None 
+
+class RecommendationResponse(BaseModel):
+    recommendation: str # "buy" or "sell"
+    outcome_recommended: str # "yes" or "no"
+    suggested_amount: int 
+    analysis: str 
 
 def _to_market_data(market: PolymarketMarket) -> MarketData:
     return MarketData(
@@ -98,6 +113,44 @@ def create_polymarket_router() -> APIRouter:
                 data=data,
                 msg=f"Retrieved {len(data)} crypto-relevant markets",
             )
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+    
+    @router.post(
+        "/markets/analyze",
+        response_model=SuccessResponse[RecommendationResponse],
+        summary="Ask AI Agent for Market Recommendation"
+    )
+    async def analyze_market(req: AnalyzeRequest):
+        try:
+            prompt = f"""
+            You are an expert financial AI Agent in prediction markets (Polymarket).
+            Analyze this event:
+            Question: {req.question}
+            YES Price: {req.yes_price} (Probability {(req.yes_price or 0.5) * 100}%)
+            Volume: ${req.volume}
+            
+            Provide a recommendation (maximum 3 short sentences).
+            Also determine whether to Buy YES or Buy NO, and specify a safe capital allocation (USDC).
+            And give an answer "YES" or "NO" based on your analysis.
+            """
+            # Use Agno to process the prompt and return structured Pydantic object
+            model = model_utils.get_model("AGENT_MODEL_ID")
+            agent = AgnoAgent(
+                model=model,
+                output_schema=RecommendationResponse,
+                markdown=False,
+                use_json_mode=model_utils.model_should_use_json_mode(model),
+            )
+            
+            response = await agent.arun(prompt)
+            data = getattr(response, "content", None) or response
+            
+            if not isinstance(data, RecommendationResponse):
+                raise ValueError("Agent failed to output correct structured format")
+            
+            return SuccessResponse.create(data=data, msg="Analysis completed")
+        
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
         

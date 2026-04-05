@@ -22,6 +22,7 @@ class PolymarketMarket(BaseModel):
     closed: bool = False
     tokens: List[PolymarketToken] = Field(default_factory=list)
     market_slug: Optional[str] = None
+    event_slug: Optional[str] = None
 
     # Derived fields — populated automatically after tokens are set
     yes_price: Optional[float] = None

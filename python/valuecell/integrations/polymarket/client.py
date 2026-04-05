@@ -42,12 +42,15 @@ async def get_markets(
                     # Bubble down useful event fields to markets if missing
                     e_cat = event.get("category")
                     e_end = event.get("endDate")
+                    e_slug = event.get("slug")
                     
                     for market in event.get("markets", []):
                         if "category" not in market and e_cat:
                             market["category"] = e_cat
                         if "endDateIso" not in market and e_end:
                             market["endDateIso"] = e_end
+                        if e_slug:
+                            market["event_slug"] = e_slug
                         # Sometimes active flag inside public-search markets is missing, we can assume True or parse from event
                         if "active" not in market:
                             market["active"] = event.get("active", True)
@@ -192,6 +195,7 @@ def _parse_single_market(item: dict) -> Optional[PolymarketMarket]:
             closed=item.get("closed", False),
             tokens=tokens,
             market_slug=item.get("slug") or item.get("market_slug"),
+            event_slug=item.get("event_slug") or (item.get("events")[0].get("slug") if item.get("events") and len(item.get("events")) > 0 else None) or item.get("slug") or item.get("market_slug"),
         )
     except Exception as exc:
         logger.warning("Failed to parse market: {err}", err=str(exc))
