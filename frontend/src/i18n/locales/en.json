@@ -176,7 +176,8 @@
       "openai": "OpenAI",
       "openai-compatible": "OpenAI Compatible API",
       "openrouter": "OpenRouter",
-      "siliconflow": "SiliconFlow"
+      "siliconflow": "SiliconFlow",
+      "nvidia": "NVIDIA NIM"
     },
     "title": "Trading Strategies",
     "add": "Add trading strategy",

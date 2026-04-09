@@ -29,14 +29,14 @@ async def web_search(query: str) -> str:
         "GOOGLE_API_KEY"
     ):
         return await _web_search_google(query)
-
+    
     # Use Perplexity Sonar via OpenRouter for web search
     # Perplexity models are optimized for web search and real-time information
     model = create_model(
         provider="openrouter",
         model_id="perplexity/sonar",
         max_tokens=None,
-    )
+        )
     response = await Agent(model=model).arun(query)
     return response.content
 

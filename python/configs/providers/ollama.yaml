@@ -1,7 +1,11 @@
 name: Ollama
 provider_type: Ollama
 enabled: true
-default_model: qwen3:4b
+default_model: qwen3.5:4b
 models:
 - id: qwen3:4b
   name: qwen3:4b
+- id: qwen3.5:4b
+  name: qwen-3.5-4b
+connection:
+  base_url: http://127.0.0.1:11434

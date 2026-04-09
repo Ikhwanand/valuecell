@@ -10,6 +10,7 @@ from ..schemas import SuccessResponse
 
 from agno.agent import Agent as AgnoAgent
 from ....utils import model as model_utils
+from ....agents.news_agent.core import NewsAgent
 
 # Response Schemas
 
@@ -32,6 +33,7 @@ class MarketData(BaseModel):
     yes_price: Optional[float] = None 
     no_price: Optional[float] = None 
     market_slug: Optional[str] = None
+    event_slug: Optional[str] = None
     tokens: List[TokenData] = []
     
 
@@ -61,6 +63,7 @@ def _to_market_data(market: PolymarketMarket) -> MarketData:
         yes_price=market.yes_price,
         no_price=market.no_price,
         market_slug=market.market_slug,
+        event_slug=market.event_slug,
         tokens=[
             TokenData(token_id=t.token_id, outcome=t.outcome, price=t.price)
             for t in market.tokens
@@ -123,6 +126,12 @@ def create_polymarket_router() -> APIRouter:
     )
     async def analyze_market(req: AnalyzeRequest):
         try:
+            # 1. Ask NewsAgent to gather real-time context
+            news_agent = NewsAgent()
+            news_query = f"Find the latest news and facts that could influence the outcome of this prediction market: '{req.question}'. Summarize only the facts."
+            news_analysis = await news_agent.run(news_query)
+
+            # 2. Provide the gathered research to the Polymarket Analyst Agent
             prompt = f"""
             You are an expert financial AI Agent in prediction markets (Polymarket).
             Analyze this event:
@@ -130,9 +139,12 @@ def create_polymarket_router() -> APIRouter:
             YES Price: {req.yes_price} (Probability {(req.yes_price or 0.5) * 100}%)
             Volume: ${req.volume}
             
-            Provide a recommendation (maximum 3 short sentences).
+            LATEST REAL-TIME NEWS RESEARCH:
+            {news_analysis}
+            
+            Based on the real-time research above and the market data, provide a solid recommendation (maximum 3 short sentences).
             Also determine whether to Buy YES or Buy NO, and specify a safe capital allocation (USDC).
-            And give an answer "YES" or "NO" based on your analysis.
+            And give an answer "YES" or "NO" based on your final stance.
             """
             # Use Agno to process the prompt and return structured Pydantic object
             model = model_utils.get_model("AGENT_MODEL_ID")

@@ -57,6 +57,10 @@ async def get_markets(
                         if "closed" not in market:
                             market["closed"] = event.get("closed", False)
                             
+                        # Filter out inactive or closed markets to ensure valid, realtime data
+                        if not market["active"] or market["closed"]:
+                            continue
+                            
                         raw_markets.append(market)
                 
                 # Only take up to the requested limit 

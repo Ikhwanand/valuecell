@@ -9,6 +9,7 @@ from agno.tools.duckduckgo import DuckDuckGoTools
 from agno.tools.webbrowser import WebBrowserTools
 from agno.tools.hackernews import HackerNewsTools
 from agno.tools.newspaper4k import Newspaper4kTools
+from agno.tools.googlesearch import GoogleSearchTools
 from loguru import logger
 
 from valuecell.adapters.models import create_model_for_agent
@@ -36,7 +37,7 @@ def _get_web_search_tool() -> list:
         return [web_search]
     else:
         logger.info("NewsAgent web search: using Agno built-in tools (DuckDuckGo + BaiduSearch + WebBrowser)")
-        return [DuckDuckGoTools(), BaiduSearchTools(), WebBrowserTools(), HackerNewsTools(), Newspaper4kTools()]
+        return [GoogleSearchTools(), DuckDuckGoTools(), BaiduSearchTools(), WebBrowserTools(), HackerNewsTools(), Newspaper4kTools()]
 
 
 class NewsAgent(BaseAgent):

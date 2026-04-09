@@ -134,6 +134,7 @@ def create_models_router() -> APIRouter:
             "siliconflow": "https://cloud.siliconflow.cn/account/ak",
             "deepseek": "https://platform.deepseek.com/api_keys",
             "dashscope": "https://bailian.console.aliyun.com/#/home",
+            "nvidia": "https://build.nvidia.com/explore/discover",
             "ollama": None,
         }
         return mapping.get(provider)
@@ -786,6 +787,11 @@ def create_models_router() -> APIRouter:
                 if provider == "dashscope":
                     return (
                         "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
+                        "openai_like",
+                    )
+                if provider == "nvidia":
+                    return (
+                        "https://integrate.api.nvidia.com/v1/chat/completions",
                         "openai_like",
                     )
                 if provider == "openai-compatible":

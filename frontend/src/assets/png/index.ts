@@ -39,6 +39,7 @@ export { default as DeepSeekPng } from "./model-providers/deepseek.png";
 export { default as GooglePng } from "./model-providers/google.png";
 export { default as OllamaPng } from "./model-providers/ollama.png";
 export { default as OpenAiPng } from "./model-providers/openai.png";
+export { default as NvidiaPng } from "./model-providers/nvidia.png";
 export { default as OpenAiCompatiblePng } from "./model-providers/openai-compatible.png";
 export { default as OpenRouterPng } from "./model-providers/openrouter.png";
 export { default as SiliconFlowPng } from "./model-providers/siliconflow.png";
