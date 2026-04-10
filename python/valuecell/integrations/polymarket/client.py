@@ -113,16 +113,21 @@ async def get_crypto_relevant_markets(limit: int = 10) -> List[PolymarketMarket]
 
 async def get_market_by_id(condition_id: str) -> Optional[PolymarketMarket]:
     """Fetch a single market by its condition ID."""
-    url = f"{GAMMA_API_BASE}/markets/{condition_id}"
+    url = f"{GAMMA_API_BASE}/markets"
     try:
         async with httpx.AsyncClient(timeout=15.0) as client:
-            response = await client.get(url)
+            response = await client.get(url, params={"condition_id": condition_id})
             response.raise_for_status()
-            return _parse_single_market(response.json())
+            data = response.json()
+            if isinstance(data, list) and len(data) > 0:
+                return _parse_single_market(data[0])
+            elif isinstance(data, dict) and "id" in data:
+                return _parse_single_market(data)
+            return None
     except httpx.HTTPError as exc:
         logger.warning("Failed to fetch market {id}: {err}", id=condition_id, err=str(exc))
         return None 
-    
+
 
 def _parse_markets(raw: list) -> List[PolymarketMarket]:
     """Parse raw API response into PolymarketMarket models."""
